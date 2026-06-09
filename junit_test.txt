@@ -1,0 +1,19 @@
+        when(cache.getIfPresent(today)).thenReturn(null);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+
+        when(redisConnection.keyCommands()).thenReturn(redisKeyCommands);
+        when(redisKeyCommands.scan(any(ScanOptions.class))).thenReturn(cursor);
+
+        doAnswer(invocation -> {
+            java.util.function.Consumer<? super byte[]> consumer = invocation.getArgument(0);
+            consumer.accept(keyBytes);
+            return null;
+        }).when(cursor).forEachRemaining(any());
+
+        when(valueOps.get("name")).thenReturn("zhangsan");
+
+        // mock redisTemplate.execute(...)
+        when(redisTemplate.execute(any(RedisCallback.class))).thenAnswer(invocation -> {
+            RedisCallback<?> callback = invocation.getArgument(0);
+            return callback.doInRedis(redisConnection);
+        });
